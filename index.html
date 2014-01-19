@@ -2,8 +2,23 @@
 <html>
 	<head>
 		<title>WebCraft</title>
+		<style type="text/css">
+			#crosshair {
+				position: fixed;
+				top: 50%;
+				left: 50%;
+				margin: -16px 0 0 -16px;
+				width: 32px;
+				height: 32px;
+			}
+			.logo {position: absolute; top: 5px; left: 15px; }
+		</style>
 	</head>
-	<body id="container">
+	<body id="container" onload="earthInit()">
+		<img class="logo" src="textures/signature.png">
 		<script src="bundle.js"></script>
+		<div id="crosshair"><img src="textures/crosshair.png"/></div>
+		<div id="earthDiv"></div>
+		<div id="webcraftDiv"></div>
 	</body>
 </html>

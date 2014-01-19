@@ -17,6 +17,7 @@
     "beefy": "~0.7.1",
     "express": "~3.4.8",
     "voxel-creature": "~0.1.0",
-    "voxel-snow": "~0.2.0"
+    "voxel-snow": "~0.2.0",
+    "three": "~0.58.10"
   }
 }
