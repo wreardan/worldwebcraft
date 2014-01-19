@@ -2,7 +2,7 @@
 
 var createGame = require('voxel-engine');
 
-var radius = 512;
+var radius = 128;
 var radius2 = radius * radius;
 var radius12 = (radius - 1) * (radius - 1);
 
@@ -29,37 +29,47 @@ var getPixel = function(x,y) {
   //wrap negative values
   while(x < 0) x++;
   while(y < 0) y++;
+
   //convert from regular texture coordinates to image coordinates
-  var tx = Math.floor(x * earthCanvas.width);
-  var ty = Math.floor(y * earthCanvas.height);
+  var tx = Math.floor(x * (earthCanvas.width-1) );
+  var ty = Math.floor(y * (earthCanvas.height-1) );
+
+  //capture pixel data from large array
+  var index = (ty * earthCanvas.width + tx) * 4;
+  var pixel = [];
+  for(var i = 0; i < 4; i++)
+    pixel[i] = pixelData[index + i];
+
   //get pixel from earth canvas
-  var pixelData = earthCanvas.getContext('2d').getImageData(tx, ty, 1, 1).data;
-  return pixelData;
+ // var pixel = earthCanvas.getContext('2d').getImageData(tx, ty, 1, 1).data;
+  return pixel;
 }
 
 //unproject sphere, then turn image pixel data into voxel
 function imageGenerator(x,y,z) {
-  //
+  //determine if on sphere border
   var value = x*x + y*y + z*z;
   var below = value <= radius2;
   var above = value >= radius12;
   if(above && below) {
     //convert to spherical coordinates
-    //var theta = Math.atan(y/x);
     var theta = Math.atan2(y,x);
     var phi = Math.acos(z/radius);
-    //convert spherical to texture coordinates
 
+    //convert spherical to texture coordinates
     var s = (Math.sin(theta) + 1) / 2;
     var t = (Math.cos(phi) + 1) / 2;
+
     //get pixel from image
     var pixel = getPixel(t, s); 
+
     //convert pixel value to voxel
     var r = pixel[0];
     var g = pixel[1];
     var b = pixel[2];
     var a = pixel[3];
     debugger;
+
     //white = ice
     if(r > 200 && g > 200 && b > 200) return 2;
     //brown = dirt
@@ -69,6 +79,7 @@ function imageGenerator(x,y,z) {
     //green = grass (default)
     return 1;
   }
+  //no voxel if not on sphere border
   return 0;
 }
 
@@ -117,10 +128,13 @@ var startGame = function() {
 //load world image
 var earthImage = new Image;
 var earthCanvas = document.createElement("canvas");
+var pixelData;
+
 earthImage.onload = function() {
   earthCanvas.width = earthImage.width;
   earthCanvas.height = earthImage.height;
   earthCanvas.getContext('2d').drawImage(earthImage, 0, 0, earthImage.width, earthImage.height);
+  pixelData = earthCanvas.getContext('2d').getImageData(0, 0, earthImage.width, earthImage.height).data;
 
   startGame();
 }
