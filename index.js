@@ -2,7 +2,7 @@
 
 var createGame = require('voxel-engine');
 
-var radius = 128;
+var radius = 2048;
 var radius2 = radius * radius;
 var radius12 = (radius - 1) * (radius - 1);
 
@@ -55,7 +55,15 @@ function imageGenerator(x,y,z) {
   var above = value >= radius12;
   if(above && below) {
     //rotate coordinates by trackball quaternion
-
+    webcraftVector.set(x,y,z);
+    /*webcraftVector.x -= Math.PI / 2;
+    if(webcraftVector.x > Math.PI * 2) webcraftVector.x -= Math.PI * 2;
+    if(webcraftVector.x < 0) webcraftVector.x += Math.PI * 2;*/
+    webcraftVector.applyQuaternion(webcraftRotation);
+//    webcraftVector.applyEuler(webcraftRotation);
+    x = webcraftVector.x;
+    y = webcraftVector.y;
+    z = webcraftVector.z;
     //convert to spherical coordinates
     var theta = Math.atan2(y,x);
     var phi = Math.acos(z/radius);
@@ -316,6 +324,25 @@ THREE.TrackballControls = function ( object, domElement ) {
 
     }
 
+  };
+
+  this.getRotation = function () {
+/*
+    //build quaternion
+    var quat = new THREE.Quaternion();
+    quat.setFromEuler(_rotateStart);
+    //rotate to north pole
+
+    var quatRot = new THREE.Quaternion();
+    quatRot.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), Math.PI / 2 );
+    quat.multiply(quatRot);
+    return quat;
+//*/
+    return _rotateEnd;
+  };
+
+  this.getEye = function () {
+    return _eye;
   };
 
   this.zoomCamera = function () {
@@ -708,7 +735,7 @@ THREE.TrackballControls.prototype = Object.create( THREE.EventDispatcher.prototy
   // Earth params
   var radius   = 0.5,
     segments = 32,
-    rotation = 6;  
+    rotation = 0;  
 
   var scene = new THREE.Scene();
 
@@ -755,9 +782,25 @@ THREE.TrackballControls.prototype = Object.create( THREE.EventDispatcher.prototy
         webglEl.style.display="block";
         container.style.display="none";
       } else {
+        //set rotation
+        //http://lolengine.net/blog/2013/09/18/beautiful-maths-quaternion-from-vectors
+        var eye = trackballControl.getEye();
+        var target = new THREE.Vector3(0,1.5,0);
+        var w = eye.clone();
+        w.cross(target);
+        var x = 1 + eye.dot(target);
+        webcraftRotation = new THREE.Quaternion(x, w.x, w.y, w.z);
+/*
+        webcraftRotation.x += Math.PI / 2;
+        if(webcraftRotation.x > Math.PI * 2) webcraftRotation.x -= Math.PI * 2;
+        if(webcraftRotation.x < 0) webcraftRotation.x += Math.PI * 2;
+*/
+        webcraftVector = new THREE.Vector3(1,0,0);
+        //show/hide
         webglEl.style.display="none";
         container.style.display="block";
       }
+
       break;
     case 87://W key, for + Ctrl= && e.ctrlKey
       break;
@@ -788,8 +831,8 @@ THREE.TrackballControls.prototype = Object.create( THREE.EventDispatcher.prototy
   function render() {
     if(earthSceneFlag) {
       trackballControl.update();
-      sphere.rotation.y += 0.0001;
-      clouds.rotation.y += 0.00011;    
+//      sphere.rotation.y += 0.0001;
+//      clouds.rotation.y += 0.00011;    
       renderer.render(scene, camera);
     }
     requestAnimationFrame(render);
