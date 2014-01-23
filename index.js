@@ -180,7 +180,7 @@ THREE.TrackballControls = function ( object, domElement ) {
   this.screen = { width: 0, height: 0, offsetLeft: 0, offsetTop: 0 };
   this.radius = ( this.screen.width + this.screen.height ) / 4;
 
-  this.rotateSpeed = 1.0;
+  this.rotateSpeed = 0.5;
   this.zoomSpeed = 1.2;
   this.panSpeed = 0.3;
 
@@ -188,7 +188,7 @@ THREE.TrackballControls = function ( object, domElement ) {
   this.noZoom = false;
   this.noPan = false;
 
-  this.staticMoving = false;
+  this.staticMoving = true;
   this.dynamicDampingFactor = 0.2;
 
   this.minDistance = 0;
@@ -784,12 +784,25 @@ THREE.TrackballControls.prototype = Object.create( THREE.EventDispatcher.prototy
       } else {
         //set rotation
         //http://lolengine.net/blog/2013/09/18/beautiful-maths-quaternion-from-vectors
-        var eye = trackballControl.getEye();
-        var target = new THREE.Vector3(0,1.5,0);
-        var w = eye.clone();
-        w.cross(target);
-        var x = 1 + eye.dot(target);
-        webcraftRotation = new THREE.Quaternion(x, w.x, w.y, w.z);
+        var shouldNormalize = false;
+        if(shouldNormalize) {
+          var eye = trackballControl.getEye();
+          eye.normalize();
+          var target = new THREE.Vector3(0,1,0);
+          var w = eye.clone();
+          w.cross(target);
+          var x = 1 + eye.dot(target);
+          webcraftRotation = new THREE.Quaternion(x, w.x, w.y, w.z);
+          webcraftRotation.normalize();
+        } else {
+          //dont normalize
+          var eye = trackballControl.getEye();
+          var target = new THREE.Vector3(0,1.5,0);
+          var w = eye.clone();
+          w.cross(target);
+          var x = 1 + eye.dot(target);
+          webcraftRotation = new THREE.Quaternion(x, w.x, w.y, w.z);
+        }
 /*
         webcraftRotation.x += Math.PI / 2;
         if(webcraftRotation.x > Math.PI * 2) webcraftRotation.x -= Math.PI * 2;
