@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "beefy index.js:bundle.js 8080"
+    "start": "beefy index.js:bundle.js 4096"
   },
   "author": "",
   "license": "ISC",

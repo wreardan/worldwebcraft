@@ -28,9 +28,11 @@ function flatGenerator(x,y,z) {
 }
 
 var getPixel = function(x,y) {
-  //wrap negative values
+  //make sure inputs are 0 <= x,y <= 1
   while(x < 0) x++;
+  while(x > 1) x--;
   while(y < 0) y++;
+  while(y > 1) y--;
 
   //convert from regular texture coordinates to image coordinates
   var tx = Math.floor(x * (earthCanvas.width-1) );
@@ -45,6 +47,27 @@ var getPixel = function(x,y) {
   //get pixel from earth canvas
  // var pixel = earthCanvas.getContext('2d').getImageData(tx, ty, 1, 1).data;
   return pixel;
+}
+
+function texToVoxel(s, t) {
+  //get pixel from image
+  var pixel = getPixel(s, t); 
+
+  //convert pixel value to voxel
+  var r = pixel[0];
+  var g = pixel[1];
+  var b = pixel[2];
+  var a = pixel[3];
+  //    debugger; //debug pixel color -> voxel conversion
+
+  //white = ice
+  if(r > 200 && g > 200 && b > 200) return 2;
+  //brown = dirt
+  if(r > 100 && g > 100 && b > 100) return 3;
+  //blue = water
+  if(r < 100 && b > 100) return 4;
+  //green = grass (default)
+  return 1;
 }
 
 //unproject sphere, then turn image pixel data into voxel
@@ -72,32 +95,28 @@ function imageGenerator(x,y,z) {
     var s = (Math.sin(theta) + 1) / 2;
     var t = (Math.cos(phi) + 1) / 2;
 
-    //get pixel from image
-    var pixel = getPixel(t, s); 
-
-    //convert pixel value to voxel
-    var r = pixel[0];
-    var g = pixel[1];
-    var b = pixel[2];
-    var a = pixel[3];
-//    debugger; //debug pixel color -> voxel conversion
-
-    //white = ice
-    if(r > 200 && g > 200 && b > 200) return 2;
-    //brown = dirt
-    if(r > 100 && g > 100 && b > 100) return 3;
-    //blue = water
-    if(r < 100 && b > 100) return 4;
-    //green = grass (default)
-    return 1;
+    return texToVoxel(s, t);
   }
   //no voxel if not on sphere border
   return 0;
 }
 
+var projectionSize = 512;
+function projectionGenerator(x,y,z) {
+  if(y === 1) {
+    while(x < 0) x += projectionSize;
+    while(z < 0) z += projectionSize;
+    var s = (x % projectionSize) / (projectionSize - 1);
+    var t = (z % projectionSize) / (projectionSize - 1);
+    return texToVoxel(s, t);
+    return 1;
+  }
+  return 0;
+}
+
 var gameOptions = {
   texturePath: './textures/',
-  generate: imageGenerator,
+  generate: projectionGenerator,
   materials: [['grass', 'dirt', 'grass_dirt'], 'ice', 'dirt', 'bluewool'],
   generateChunks: true,
   chunkSize: 32,
@@ -134,7 +153,9 @@ var startGame = function() {
   var dude = createPlayer('./textures/dude.png');
   dude.possess();
 
-  dude.yaw.position.set(0,radius + 2,0);
+//  dude.yaw.position.set(0,radius + 2,0);
+  dude.yaw.position.set(0,0 + 2,0);
+
 }
 
 //load world image
